@@ -25,6 +25,8 @@ CLI-first design with JSON output and proper exit codes for scripting and CI pip
 
 ---
 
+## English
+
 ## Why this tool?
 
 ### ❌ Traditional byte diff (hard to read)
@@ -48,6 +50,34 @@ Hard to understand what actually changed.
       largest region size : 3 bytes
 
 Quickly see where the change is.
+
+---
+
+## 繁體中文
+
+## 為什麼需要這個工具？
+
+### ❌ 傳統 byte diff（難以閱讀）
+
+    offset 0x00000001 : 0x02 -> 0xFF
+    offset 0x00000002 : 0x03 -> 0x88
+    offset 0x00000003 : 0x04 -> 0x99
+
+很難快速理解實際改動的位置。
+
+---
+
+### ✅ 區段分析（本工具）
+
+    Changed regions:
+      0x00000001 - 0x00000003 (3 bytes)
+
+    Region summary:
+      total changed bytes : 3
+      total regions       : 1
+      largest region size : 3 bytes
+
+可以快速看出變動區段。
 
 ---
 
@@ -91,6 +121,8 @@ Quickly see where the change is.
 
 ---
 
+## English
+
 ## Use Cases
 
 ### 🔧 Firmware comparison during development
@@ -107,6 +139,27 @@ Generate JSON output and integrate with build pipelines or testing scripts.
 
 ### 🔍 Reverse engineering / analysis
 Locate modified regions in binary files for further inspection.
+
+---
+
+## 繁體中文
+
+## 使用情境
+
+### 🔧 Firmware 開發比對
+快速比較不同版本 firmware 的差異，不需要逐一檢視 byte-level diff。
+
+### 🧪 回歸測試 / 發佈驗證
+搭配 `--fail-if-different` 自動檢測版本差異。
+
+### 🧹 忽略 padding 雜訊
+過濾 `0xFF` / `0x00` 差異，專注在實際變動內容。
+
+### ⚙️ 自動化 / CI 整合
+透過 JSON 輸出與 exit code，整合至 build pipeline 或測試流程。
+
+### 🔍 逆向工程 / 分析
+快速定位 binary 中被修改的區段。
 
 ---
 
