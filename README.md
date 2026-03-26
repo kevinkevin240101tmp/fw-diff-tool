@@ -2,7 +2,7 @@
 
 Quickly understand what changed between firmware versions — with region-level analysis, padding-aware diff, and automation-friendly output.
 
-[English](#english) | [繁體中文](#繁體中文)
+[English](#english) | [简体中文](#简体中文) | [繁體中文](#繁體中文)
 
 ---
 
@@ -52,73 +52,59 @@ Quickly see where the change is.
 
 ---
 
-## Demo
+## Use Cases
 
-### Input
-
-```
-python main.py bin samples\binary\a.bin samples\binary\b.bin --regions-only
-```
-
-### Output
-
-```
-Binary diff result
-File 1: samples\binary\a.bin (5 bytes)
-File 2: samples\binary\b.bin (6 bytes)
-
-File sizes differ: samples\binary\a.bin=5 bytes, samples\binary\b.bin=6 bytes
-
-Changed regions:
-  0x00000001 - 0x00000001 (1 bytes)
-  0x00000003 - 0x00000003 (1 bytes)
-
-Region summary:
-  total changed bytes : 2
-  total regions       : 2
-  largest region size : 1 bytes
-```
-
-### JSON Output
-
-```
-python main.py bin samples\binary\a.bin samples\binary\b.bin --json
-
-{
-  "mode": "bin",
-  "file1": "...",
-  "regions": [...],
-  "region_summary": {
-    "total_changed_bytes": 2,
-    "total_regions": 2,
-    "largest_region_size": 1
-  }
-}
-```
+* Firmware comparison during development
+* Regression / release verification
+* Ignore padding noise
+* Automation / CI integration
+* Reverse engineering
 
 ---
 
-## Use Cases
+# 简体中文
 
-### 🔧 Firmware comparison during development
+## 🔍 区段分析
 
-Quickly identify what changed between firmware builds without scanning raw byte diffs.
+将 byte 差异整理为区段，快速掌握修改范围。
 
-### 🧪 Regression / release verification
+## 🧹 忽略 padding 噪声
 
-Use `--fail-if-different` in scripts to detect unintended changes between firmware versions.
+过滤 `0xFF` / `0x00`，专注真实变动。
 
-### 🧹 Ignore padding noise
+## ⚙️ 支持自动化
 
-Filter out `0xFF` / `0x00` differences to focus on meaningful changes in flash images.
+支持 JSON 与 exit code，可整合 CI / script。
 
-### ⚙️ Automation / CI integration
+---
 
-Generate JSON output and integrate with build pipelines or testing scripts.
+## 为什么需要这个工具？
 
-### 🔍 Reverse engineering / analysis
+### ❌ 传统 byte diff（难以阅读）
 
-Locate modified regions in binary files for further inspection.
+```
+offset 0x00000001 : 0x02 -> 0xFF
+offset 0x00000002 : 0x03 -> 0x88
+offset 0x00000003 : 0x04 -> 0x99
+```
+
+难以快速理解实际变动。
+
+---
+
+### ✅ 区段分析（本工具）
+
+```
+Changed regions:
+  0x00000001 - 0x00000003 (3 bytes)
+
+Region summary:
+  total changed bytes : 3
+  total regions       : 1
+  largest region size : 3 bytes
+```
+
+快速看出变化区域。
 
 ---
 
@@ -126,15 +112,15 @@ Locate modified regions in binary files for further inspection.
 
 ## 🔍 區段分析
 
-將 byte 差異整理為有意義的區段，讓你快速掌握修改範圍，而不是逐一查看 offset。
+將 byte 差異整理為區段，快速掌握修改範圍。
 
 ## 🧹 忽略 padding 雜訊
 
-過濾 firmware 常見的 `0xFF` / `0x00` 填充資料，專注於實際變動。
+過濾 `0xFF` / `0x00`，專注真正變動。
 
 ## ⚙️ 支援自動化
 
-CLI 設計，支援 JSON 輸出與 exit code，可整合至 script 或 CI 流程。
+支援 JSON 與 exit code，可整合 CI / script。
 
 ---
 
@@ -148,7 +134,7 @@ offset 0x00000002 : 0x03 -> 0x88
 offset 0x00000003 : 0x04 -> 0x99
 ```
 
-很難快速理解實際改動位置。
+很難快速理解實際改動。
 
 ---
 
@@ -164,31 +150,7 @@ Region summary:
   largest region size : 3 bytes
 ```
 
-可以快速看出變動區段。
-
----
-
-## 使用情境
-
-### 🔧 Firmware 開發比對
-
-快速比較不同版本 firmware 差異，不需逐一檢視 byte diff。
-
-### 🧪 回歸測試 / 發佈驗證
-
-搭配 `--fail-if-different` 自動檢測版本差異。
-
-### 🧹 忽略 padding 雜訊
-
-過濾 `0xFF` / `0x00` 差異，專注實際變動。
-
-### ⚙️ 自動化 / CI 整合
-
-透過 JSON 與 exit code 整合至 build pipeline。
-
-### 🔍 逆向工程 / 分析
-
-快速定位 binary 中被修改的區段。
+快速看出變動區段。
 
 ---
 
@@ -202,89 +164,12 @@ Region summary:
 * Changed regions detection
 * Region summary
 * JSON output
-* Quiet mode for automation
-* Exit code control with `--fail-if-different`
-* Ignore `0xFF` padding differences
-* Ignore `0x00` padding differences
-* Filter regions by minimum size
+* Quiet mode
+* `--fail-if-different`
+* Ignore `0xFF` / `0x00`
 
 ## Usage
 
-### Text mode
-
 ```
-python main.py text file1 file2 [output_file]
+python main.py [mode] [args]
 ```
-
-### Binary mode
-
-```
-python main.py bin file1 file2 [output_file] [options]
-```
-
-Options:
-
-```
---fail-if-different
---ignore-ff
---ignore-00
---max-diffs N
---regions-only
---json
---quiet
---min-region-size N
-```
-
-### Directory mode
-
-```
-python main.py dir dir1 dir2 [output_file]
-```
-
-## Examples
-
-### Text diff
-
-```
-python main.py text samples\text\old.txt samples\text\new.txt output\result.diff
-```
-
-### Binary diff
-
-```
-python main.py bin samples\binary\a.bin samples\binary\b.bin output\bin_result.txt
-```
-
-### Binary diff with ignored padding
-
-```
-python main.py bin samples\binary\a.bin samples\binary\b.bin --ignore-ff --ignore-00
-```
-
-### Binary diff with region filtering
-
-```
-python main.py bin samples\binary\a.bin samples\binary\b.bin --regions-only --min-region-size 2
-```
-
-### Binary diff as JSON
-
-```
-python main.py bin samples\binary\a.bin samples\binary\b.bin output\bin_result.json --json
-```
-
-### Binary diff for automation
-
-```
-python main.py bin samples\binary\a.bin samples\binary\b.bin --fail-if-different --quiet
-```
-
-### Directory diff
-
-```
-python main.py dir samples\dir\dirA samples\dir\dirB output\dir_result.txt
-```
-
-## Notes
-
-This tool is an evolving firmware-oriented binary analysis utility.
