@@ -1,3 +1,6 @@
+# Firmware Diff Tool - main.py
+# (Paste or edit your code here)
+
 import sys
 import difflib
 from pathlib import Path
@@ -222,35 +225,175 @@ def save_or_print(lines, output_file=None, saved_message="Result saved to"):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Firmware Diff Tool")
+    description = """Firmware Diff Tool
 
-    subparsers = parser.add_subparsers(dest="mode", required=True)
+Compare text files, binary files, and directories from the command line.
 
+Modes:
+  text  Compare two text files and output unified diff
+  bin   Compare two binary files and show byte differences / regions
+  dir   Compare two directories and list changed / added / removed files
+"""
+
+    epilog = """Examples:
+  python main.py -h
+  python main.py text file1.txt file2.txt
+  python main.py text file1.txt file2.txt result.diff
+  python main.py bin old.bin new.bin
+  python main.py bin old.bin new.bin result.txt
+  python main.py bin old.bin new.bin --json
+  python main.py bin old.bin new.bin --ignore-ff --ignore-00
+  python main.py bin old.bin new.bin --regions-only --min-region-size 16
+  python main.py bin old.bin new.bin --fail-if-different
+  python main.py dir dirA dirB
+  python main.py dir dirA dirB dir_result.txt
+
+Tip:
+  Use 'python main.py <mode> -h' for mode-specific help.
+  Examples:
+    python main.py text -h
+    python main.py bin -h
+    python main.py dir -h
+"""
+
+    parser = argparse.ArgumentParser(
+        prog="main.py",
+        description=description,
+        epilog=epilog,
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+
+    subparsers = parser.add_subparsers(
+        dest="mode",
+        required=True,
+        title="modes",
+        metavar="{text,bin,dir}",
+        help="Available comparison modes. Use '<mode> -h' for more details.",
+    )
+
+    # -------------------------
     # text mode
-    parser_text = subparsers.add_parser("text", help="Compare two text files")
-    parser_text.add_argument("file1")
-    parser_text.add_argument("file2")
-    parser_text.add_argument("output_file", nargs="?")
+    # -------------------------
+    parser_text = subparsers.add_parser(
+        "text",
+        help="Compare two text files",
+        description="""Text mode
 
+Compare two text files and output unified diff to screen or file.
+""",
+        epilog="""Examples:
+  python main.py text old.txt new.txt
+  python main.py text old.txt new.txt result.diff
+""",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+
+    parser_text.add_argument("file1", help="Path to first text file")
+    parser_text.add_argument("file2", help="Path to second text file")
+    parser_text.add_argument(
+        "output_file",
+        nargs="?",
+        help="Optional output file to save diff result",
+    )
+
+
+    # -------------------------
     # binary mode
-    parser_bin = subparsers.add_parser("bin", help="Compare two binary files")
-    parser_bin.add_argument("file1")
-    parser_bin.add_argument("file2")
-    parser_bin.add_argument("output_file", nargs="?")
-    parser_bin.add_argument("--fail-if-different", action="store_true")
-    parser_bin.add_argument("--ignore-ff", action="store_true")
-    parser_bin.add_argument("--ignore-00", action="store_true")
-    parser_bin.add_argument("--max-diffs", type=int, default=100)
-    parser_bin.add_argument("--regions-only", action="store_true")
-    parser_bin.add_argument("--json", action="store_true")
-    parser_bin.add_argument("--quiet", action="store_true")
-    parser_bin.add_argument("--min-region-size", type=int, default=1)
+    # -------------------------
+    parser_bin = subparsers.add_parser(
+        "bin",
+        help="Compare two binary files",
+        description="""Binary mode
 
+Compare two binary files and show byte differences, changed regions, or JSON output.
+""",
+        epilog="""Examples:
+  python main.py bin old.bin new.bin
+  python main.py bin old.bin new.bin result.txt
+  python main.py bin old.bin new.bin --json
+  python main.py bin old.bin new.bin --ignore-ff --ignore-00
+  python main.py bin old.bin new.bin --regions-only --min-region-size 16
+  python main.py bin old.bin new.bin --fail-if-different
+""",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+
+    parser_bin.add_argument("file1", help="Path to first binary file")
+    parser_bin.add_argument("file2", help="Path to second binary file")
+    parser_bin.add_argument(
+        "output_file",
+        nargs="?",
+        help="Optional output file to save result",
+    )
+
+    parser_bin.add_argument(
+        "--fail-if-different", 
+        action="store_true",
+        help="Exit with code 1 if any difference is found"
+    )
+    parser_bin.add_argument(
+        "--ignore-ff", 
+        action="store_true",
+        help="Ignore differences where either byte is 0xFF"
+    )
+    parser_bin.add_argument(
+        "--ignore-00", 
+        action="store_true",
+        help="Ignore differences where either byte is 0x00"
+    )
+    parser_bin.add_argument(
+        "--max-diffs", 
+        type=int, 
+        default=100,
+        help="Maximum number of differences to record (default: 100)"
+    )
+    parser_bin.add_argument(
+        "--regions-only", 
+        action="store_true",
+        help="Show only changed regions (hide per-byte diffs)"
+    )
+    parser_bin.add_argument(
+        "--json", 
+        action="store_true",
+        help="Output result in JSON format"
+    )
+    parser_bin.add_argument(
+        "--quiet", 
+        action="store_true",
+        help="Suppress console output"
+    )
+    parser_bin.add_argument(
+        "--min-region-size", 
+        type=int, 
+        default=1,
+        help="Only show regions >= this size (default: 1)"
+    )
+
+
+    # -------------------------
     # directory mode
-    parser_dir = subparsers.add_parser("dir", help="Compare two directories")
-    parser_dir.add_argument("dir1")
-    parser_dir.add_argument("dir2")
-    parser_dir.add_argument("output_file", nargs="?")
+    # -------------------------
+    parser_dir = subparsers.add_parser(
+        "dir",
+        help="Compare two directories",
+        description="""Directory mode
+
+Compare two directories and list added, removed, changed, and identical files.
+""",
+        epilog="""Examples:
+  python main.py dir dirA dirB
+  python main.py dir dirA dirB dir_result.txt
+""",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+
+    parser_dir.add_argument("dir1", help="Path to first directory")
+    parser_dir.add_argument("dir2", help="Path to second directory")
+    parser_dir.add_argument(
+        "output_file",
+        nargs="?",
+        help="Optional output file to save result",
+    )
 
     return parser.parse_args()
 

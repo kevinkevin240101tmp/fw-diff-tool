@@ -1,175 +1,148 @@
 # Firmware Diff Tool
 
-Quickly understand what changed between firmware versions — with region-level analysis, padding-aware diff, and automation-friendly output.
-
-[English](#english) | [简体中文](#简体中文) | [繁體中文](#繁體中文)
+A lightweight CLI tool for comparing text files, binary files, and directories.
 
 ---
 
-# English
+## 🚀 Features
 
-## 🔍 Region-level insight
-
-Group byte differences into meaningful regions so you can quickly identify modified areas instead of scanning raw byte diffs.
-
-## 🧹 Padding-aware diff
-
-Ignore `0xFF` and `0x00` noise commonly found in firmware images.
-
-## ⚙️ Automation-ready
-
-CLI-first design with JSON output and proper exit codes for scripting and CI pipelines.
+* Text file comparison (unified diff)
+* Binary comparison (byte-level + regions)
+* Directory comparison
+* Changed region detection
+* Summary report
+* JSON output (binary mode)
 
 ---
 
-## Why this tool?
+## ⚙️ Usage
 
-### ❌ Traditional byte diff (hard to read)
+### Show help
 
+```bash
+python main.py -h
 ```
-offset 0x00000001 : 0x02 -> 0xFF
-offset 0x00000002 : 0x03 -> 0x88
-offset 0x00000003 : 0x04 -> 0x99
-```
-
-Hard to understand what actually changed.
 
 ---
 
-### ✅ Region-based diff (this tool)
+## 🧩 Modes
 
 ```
-Changed regions:
-  0x00000001 - 0x00000003 (3 bytes)
-
-Region summary:
-  total changed bytes : 3
-  total regions       : 1
-  largest region size : 3 bytes
+text  Compare two text files and output unified diff
+bin   Compare two binary files and show byte differences / regions
+dir   Compare two directories and list changed / added / removed files
 ```
 
-Quickly see where the change is.
+👉 For detailed usage of each mode:
+
+```bash
+python main.py text -h
+python main.py bin -h
+python main.py dir -h
+```
 
 ---
 
-## Use Cases
+## 📝 Text mode
 
-* Firmware comparison during development
-* Regression / release verification
-* Ignore padding noise
-* Automation / CI integration
-* Reverse engineering
+Compare two text files:
+
+```bash
+python main.py text old.txt new.txt
+```
+
+Save result:
+
+```bash
+python main.py text old.txt new.txt result.diff
+```
 
 ---
 
-# 简体中文
+## 🔧 Binary mode
 
-## 🔍 区段分析
+Compare two binary files:
 
-将 byte 差异整理为区段，快速掌握修改范围。
+```bash
+python main.py bin old.bin new.bin
+```
 
-## 🧹 忽略 padding 噪声
+Save result:
 
-过滤 `0xFF` / `0x00`，专注真实变动。
+```bash
+python main.py bin old.bin new.bin result.txt
+```
 
-## ⚙️ 支持自动化
+JSON output:
 
-支持 JSON 与 exit code，可整合 CI / script。
+```bash
+python main.py bin old.bin new.bin --json
+```
+
+Common options:
+
+```bash
+--ignore-ff          Ignore differences where either byte is 0xFF
+--ignore-00          Ignore differences where either byte is 0x00
+--regions-only       Show only changed regions
+--min-region-size N  Only show regions >= N bytes
+--fail-if-different  Exit with code 1 if differences exist
+--max-diffs N        Limit number of differences (default: 100)
+```
 
 ---
 
-## 为什么需要这个工具？
+## 📂 Directory mode
 
-### ❌ 传统 byte diff（难以阅读）
+Compare two directories:
 
-```
-offset 0x00000001 : 0x02 -> 0xFF
-offset 0x00000002 : 0x03 -> 0x88
-offset 0x00000003 : 0x04 -> 0x99
+```bash
+python main.py dir dirA dirB
 ```
 
-难以快速理解实际变动。
+Save result:
+
+```bash
+python main.py dir dirA dirB dir_result.txt
+```
 
 ---
 
-### ✅ 区段分析（本工具）
+## 🧪 Quick test (recommended)
 
+After unzip, try:
+
+```bash
+python main.py bin samples/binary/a.bin samples/binary/b.bin
 ```
-Changed regions:
-  0x00000001 - 0x00000003 (3 bytes)
-
-Region summary:
-  total changed bytes : 3
-  total regions       : 1
-  largest region size : 3 bytes
-```
-
-快速看出变化区域。
 
 ---
 
-# 繁體中文
+## 📦 What you get
 
-## 🔍 區段分析
-
-將 byte 差異整理為區段，快速掌握修改範圍。
-
-## 🧹 忽略 padding 雜訊
-
-過濾 `0xFF` / `0x00`，專注真正變動。
-
-## ⚙️ 支援自動化
-
-支援 JSON 與 exit code，可整合 CI / script。
+* `main.py`
+* `README.md`
+* `samples/`
 
 ---
 
-## 為什麼需要這個工具？
+## 🎯 Use cases
 
-### ❌ 傳統 byte diff（難以閱讀）
-
-```
-offset 0x00000001 : 0x02 -> 0xFF
-offset 0x00000002 : 0x03 -> 0x88
-offset 0x00000003 : 0x04 -> 0x99
-```
-
-很難快速理解實際改動。
+* Firmware comparison
+* Embedded system analysis
+* Binary diff inspection
+* File system comparison
 
 ---
 
-### ✅ 區段分析（本工具）
+## ⚠️ Notes
 
-```
-Changed regions:
-  0x00000001 - 0x00000003 (3 bytes)
-
-Region summary:
-  total changed bytes : 3
-  total regions       : 1
-  largest region size : 3 bytes
-```
-
-快速看出變動區段。
+* CLI tool (no GUI)
+* Designed for practical and scriptable usage
+* Lightweight and easy to modify
 
 ---
 
-# Technical Details
+## 🔧 Requirements
 
-## Features
-
-* Text file diff
-* Binary file diff
-* Directory diff
-* Changed regions detection
-* Region summary
-* JSON output
-* Quiet mode
-* `--fail-if-different`
-* Ignore `0xFF` / `0x00`
-
-## Usage
-
-```
-python main.py [mode] [args]
-```
+* Python 3.x
