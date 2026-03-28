@@ -1,6 +1,8 @@
 # Firmware Diff Tool
 
-A lightweight CLI tool for comparing text files, binary files, and directories.
+A lightweight CLI tool for comparing text files, binary files (firmware), and directories.
+
+Designed for engineers who need fast, scriptable diff results.
 
 ---
 
@@ -61,6 +63,8 @@ python main.py text old.txt new.txt result.diff
 
 ## 🔧 Binary mode
 
+Compare binary files at byte level, with region detection and summary.
+
 Compare two binary files:
 
 ```bash
@@ -110,7 +114,7 @@ python main.py dir dirA dirB dir_result.txt
 
 ## 🧪 Quick test (recommended)
 
-After unzip, try:
+After unzip, run this command to verify everything works:
 
 ```bash
 python main.py bin samples/binary/a.bin samples/binary/b.bin
