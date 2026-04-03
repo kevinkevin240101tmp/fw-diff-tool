@@ -1,5 +1,4 @@
 # Firmware Diff Tool - main.py
-# (Paste or edit your code here)
 
 import sys
 import difflib
@@ -7,23 +6,6 @@ from pathlib import Path
 import filecmp
 import argparse
 import json
-
-
-def print_help():
-    print("Firmware Diff Tool")
-    print("")
-    print("Usage:")
-    print("  Text mode     : python main.py file1 file2 [output_file]")
-    print("  Binary mode   : python main.py --bin file1 file2 [output_file]")
-    print("  Directory mode: python main.py --dir dir1 dir2 [output_file]")
-    print("")
-    print("Examples:")
-    print("  python main.py old.txt new.txt")
-    print("  python main.py old.txt new.txt result.diff")
-    print("  python main.py --bin a.bin b.bin")
-    print("  python main.py --bin a.bin b.bin bin_result.txt")
-    print("  python main.py --dir dirA dirB")
-    print("  python main.py --dir dirA dirB dir_result.txt")
 
 
 def read_text_file(path):
@@ -111,6 +93,28 @@ def format_changed_regions(regions):
     return lines
 
 
+def format_region_summary(regions):
+    lines = []
+    lines.append("Region summary:")
+
+    if not regions:
+        lines.append("  total changed bytes : 0")
+        lines.append("  total regions       : 0")
+        lines.append("  largest region size : 0 bytes")
+        return lines
+
+    sizes = [end - start + 1 for start, end in regions]
+    total_changed_bytes = sum(sizes)
+    total_regions = len(regions)
+    largest_region = max(sizes)
+
+    lines.append(f"  total changed bytes : {total_changed_bytes}")
+    lines.append(f"  total regions       : {total_regions}")
+    lines.append(f"  largest region size : {largest_region} bytes")
+
+    return lines
+
+
 def format_binary_diff(file1, file2, diffs, extra_info, len1, len2, max_diffs, regions_only=False, min_region_size=1):
     lines = []
     lines.append("Binary diff result")
@@ -131,17 +135,17 @@ def format_binary_diff(file1, file2, diffs, extra_info, len1, len2, max_diffs, r
     if extra_info:
         lines.append(extra_info)
 
+    regions = build_changed_regions(diffs)
+
+    regions = [
+        (start, end)
+        for start, end in regions
+        if (end - start + 1) >= min_region_size
+    ]
+
+    if regions or extra_info:
         lines.append("")
-        regions = build_changed_regions(diffs)
-
-        regions = [
-            (start, end)
-            for start, end in regions
-            if (end - start + 1) >= min_region_size
-        ]
-
         lines.extend(format_changed_regions(regions))
-
         lines.append("")
         lines.extend(format_region_summary(regions))
 
@@ -152,8 +156,8 @@ def compare_directories(dir1, dir2):
     dcmp = filecmp.dircmp(dir1, dir2)
     lines = []
     lines.append("Directory diff result")
-    lines.append(f"Dir 1: {dir1}")
-    lines.append(f"Dir 2: {dir2}")
+    lines.append(f"Directory 1: {dir1}")
+    lines.append(f"Directory 2: {dir2}")
     lines.append("")
 
     summary = {
@@ -169,13 +173,13 @@ def compare_directories(dir1, dir2):
         lines.append(f"[{current}]")
 
         if dcmp_obj.left_only:
-            lines.append("  Only in dir1:")
+            lines.append("  Only in directory 1:")
             for name in dcmp_obj.left_only:
                 lines.append(f"    {name}")
             summary["left_only"] += len(dcmp_obj.left_only)
 
         if dcmp_obj.right_only:
-            lines.append("  Only in dir2:")
+            lines.append("  Only in directory 2:")
             for name in dcmp_obj.right_only:
                 lines.append(f"    {name}")
             summary["right_only"] += len(dcmp_obj.right_only)
@@ -204,11 +208,11 @@ def compare_directories(dir1, dir2):
 
     walk_diff(dcmp)
 
-    lines.append("Summary")
-    lines.append(f"  only in dir1   : {summary['left_only']}")
-    lines.append(f"  only in dir2   : {summary['right_only']}")
-    lines.append(f"  changed files  : {summary['diff_files']}")
-    lines.append(f"  identical files: {summary['same_files']}")
+    lines.append("Summary:")
+    lines.append(f"  only in directory 1 : {summary['left_only']}")
+    lines.append(f"  only in directory 2 : {summary['right_only']}")
+    lines.append(f"  changed files       : {summary['diff_files']}")
+    lines.append(f"  identical files     : {summary['same_files']}")
 
     return lines
 
@@ -250,10 +254,6 @@ Modes:
 
 Tip:
   Use 'python main.py <mode> -h' for mode-specific help.
-  Examples:
-    python main.py text -h
-    python main.py bin -h
-    python main.py dir -h
 """
 
     parser = argparse.ArgumentParser(
@@ -271,129 +271,47 @@ Tip:
         help="Available comparison modes. Use '<mode> -h' for more details.",
     )
 
-    # -------------------------
-    # text mode
-    # -------------------------
     parser_text = subparsers.add_parser(
         "text",
         help="Compare two text files",
-        description="""Text mode
-
-Compare two text files and output unified diff to screen or file.
-""",
-        epilog="""Examples:
-  python main.py text old.txt new.txt
-  python main.py text old.txt new.txt result.diff
-""",
+        description="Text mode\n\nCompare two text files and output unified diff.",
         formatter_class=argparse.RawTextHelpFormatter,
     )
 
     parser_text.add_argument("file1", help="Path to first text file")
     parser_text.add_argument("file2", help="Path to second text file")
-    parser_text.add_argument(
-        "output_file",
-        nargs="?",
-        help="Optional output file to save diff result",
-    )
+    parser_text.add_argument("output_file", nargs="?", help="Optional output file")
 
-
-    # -------------------------
-    # binary mode
-    # -------------------------
     parser_bin = subparsers.add_parser(
         "bin",
         help="Compare two binary files",
-        description="""Binary mode
-
-Compare two binary files and show byte differences, changed regions, or JSON output.
-""",
-        epilog="""Examples:
-  python main.py bin old.bin new.bin
-  python main.py bin old.bin new.bin result.txt
-  python main.py bin old.bin new.bin --json
-  python main.py bin old.bin new.bin --ignore-ff --ignore-00
-  python main.py bin old.bin new.bin --regions-only --min-region-size 16
-  python main.py bin old.bin new.bin --fail-if-different
-""",
+        description="Binary mode\n\nCompare two binary files and show byte differences or regions.",
         formatter_class=argparse.RawTextHelpFormatter,
     )
 
     parser_bin.add_argument("file1", help="Path to first binary file")
     parser_bin.add_argument("file2", help="Path to second binary file")
-    parser_bin.add_argument(
-        "output_file",
-        nargs="?",
-        help="Optional output file to save result",
-    )
+    parser_bin.add_argument("output_file", nargs="?", help="Optional output file")
 
-    parser_bin.add_argument(
-        "--fail-if-different", 
-        action="store_true",
-        help="Exit with code 1 if any difference is found"
-    )
-    parser_bin.add_argument(
-        "--ignore-ff", 
-        action="store_true",
-        help="Ignore differences where either byte is 0xFF"
-    )
-    parser_bin.add_argument(
-        "--ignore-00", 
-        action="store_true",
-        help="Ignore differences where either byte is 0x00"
-    )
-    parser_bin.add_argument(
-        "--max-diffs", 
-        type=int, 
-        default=100,
-        help="Maximum number of differences to record (default: 100)"
-    )
-    parser_bin.add_argument(
-        "--regions-only", 
-        action="store_true",
-        help="Show only changed regions (hide per-byte diffs)"
-    )
-    parser_bin.add_argument(
-        "--json", 
-        action="store_true",
-        help="Output result in JSON format"
-    )
-    parser_bin.add_argument(
-        "--quiet", 
-        action="store_true",
-        help="Suppress console output"
-    )
-    parser_bin.add_argument(
-        "--min-region-size", 
-        type=int, 
-        default=1,
-        help="Only show regions >= this size (default: 1)"
-    )
+    parser_bin.add_argument("--fail-if-different", action="store_true", help="Exit with code 1 if differences are found")
+    parser_bin.add_argument("--ignore-ff", action="store_true", help="Ignore 0xFF differences")
+    parser_bin.add_argument("--ignore-00", action="store_true", help="Ignore 0x00 differences")
+    parser_bin.add_argument("--max-diffs", type=int, default=100, help="Max differences to show (default: 100)")
+    parser_bin.add_argument("--regions-only", action="store_true", help="Show only changed regions")
+    parser_bin.add_argument("--json", action="store_true", help="Output JSON")
+    parser_bin.add_argument("--quiet", action="store_true", help="Suppress output")
+    parser_bin.add_argument("--min-region-size", type=int, default=1, help="Minimum region size (default: 1)")
 
-
-    # -------------------------
-    # directory mode
-    # -------------------------
     parser_dir = subparsers.add_parser(
         "dir",
         help="Compare two directories",
-        description="""Directory mode
-
-Compare two directories and list added, removed, changed, and identical files.
-""",
-        epilog="""Examples:
-  python main.py dir dirA dirB
-  python main.py dir dirA dirB dir_result.txt
-""",
+        description="Directory mode\n\nCompare two directories and list differences.",
         formatter_class=argparse.RawTextHelpFormatter,
     )
 
     parser_dir.add_argument("dir1", help="Path to first directory")
     parser_dir.add_argument("dir2", help="Path to second directory")
-    parser_dir.add_argument(
-        "output_file",
-        nargs="?",
-        help="Optional output file to save result",
-    )
+    parser_dir.add_argument("output_file", nargs="?", help="Optional output file")
 
     return parser.parse_args()
 
@@ -409,19 +327,11 @@ def build_binary_json_result(file1, file2, diffs, extra_info, len1, len2):
         "len1": len1,
         "len2": len2,
         "diffs": [
-            {
-                "offset": offset,
-                "from": v1,
-                "to": v2
-            }
+            {"offset": offset, "from": v1, "to": v2}
             for offset, v1, v2 in diffs
         ],
         "regions": [
-            {
-                "start": start,
-                "end": end,
-                "size": end - start + 1
-            }
+            {"start": start, "end": end, "size": end - start + 1}
             for start, end in regions
         ],
         "region_summary": {
@@ -431,28 +341,6 @@ def build_binary_json_result(file1, file2, diffs, extra_info, len1, len2):
         },
         "extra_info": extra_info
     }
-
-
-def format_region_summary(regions):
-    lines = []
-    lines.append("Region summary:")
-
-    if not regions:
-        lines.append("  total changed bytes : 0")
-        lines.append("  total regions       : 0")
-        lines.append("  largest region size : 0 bytes")
-        return lines
-
-    sizes = [end - start + 1 for start, end in regions]
-    total_changed_bytes = sum(sizes)
-    total_regions = len(regions)
-    largest_region = max(sizes)
-
-    lines.append(f"  total changed bytes : {total_changed_bytes}")
-    lines.append(f"  total regions       : {total_regions}")
-    lines.append(f"  largest region size : {largest_region} bytes")
-
-    return lines
 
 
 def check_file_exists(path):
@@ -499,8 +387,10 @@ if __name__ == "__main__":
             with open(args.output_file, 'w', encoding='utf-8') as f:
                 for line in diff:
                     f.write(line + '\n')
-            print(f"Diff result saved to: {args.output_file}")
+            print(f"Text diff result saved to: {args.output_file}")
         else:
+            print("Text diff result")
+            print("")
             for line in diff:
                 print(line)
 
@@ -544,7 +434,7 @@ if __name__ == "__main__":
                 with open(args.output_file, "w", encoding="utf-8") as f:
                     f.write(json_text + "\n")
                 if not args.quiet:
-                    print(f"Binary JSON result saved to: {args.output_file}")
+                    print(f"Binary diff result saved to: {args.output_file}")
             else:
                 if not args.quiet:
                     print(json_text)

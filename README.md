@@ -1,19 +1,26 @@
 # Firmware Diff Tool
 
-A lightweight CLI tool for comparing text files, binary files (firmware), and directories.
+Understand firmware (binary) changes instantly — without reading raw hex.
 
-Designed for engineers who need fast, scriptable diff results.
+A lightweight CLI tool focused on **firmware / binary comparison**, with additional text and directory diff modes.
+
+Designed for engineers who need fast, scriptable, and reliable diff results.
 
 ---
 
 ## 🚀 Features
 
-* Text file comparison (unified diff)
+**Primary (Firmware / Binary):**
+
 * Binary comparison (byte-level + regions)
-* Directory comparison
 * Changed region detection
-* Summary report
-* JSON output (binary mode)
+* Summary report (size, count, largest region)
+* JSON output (for automation / CI)
+
+**Additional:**
+
+* Text file comparison (unified diff)
+* Directory comparison
 
 ---
 
@@ -30,38 +37,22 @@ python main.py -h
 ## 🧩 Modes
 
 ```
-text  Compare two text files and output unified diff
 bin   Compare two binary files and show byte differences / regions
+text  Compare two text files and output unified diff
 dir   Compare two directories and list changed / added / removed files
 ```
 
 👉 For detailed usage of each mode:
 
 ```bash
-python main.py text -h
 python main.py bin -h
+python main.py text -h
 python main.py dir -h
 ```
 
 ---
 
-## 📝 Text mode
-
-Compare two text files:
-
-```bash
-python main.py text old.txt new.txt
-```
-
-Save result:
-
-```bash
-python main.py text old.txt new.txt result.diff
-```
-
----
-
-## 🔧 Binary mode
+## 🔧 Binary mode (Primary)
 
 Compare binary files at byte level, with region detection and summary.
 
@@ -77,7 +68,7 @@ Save result:
 python main.py bin old.bin new.bin result.txt
 ```
 
-JSON output:
+JSON output (for automation / CI):
 
 ```bash
 python main.py bin old.bin new.bin --json
@@ -96,7 +87,23 @@ Common options:
 
 ---
 
-## 📂 Directory mode
+## 📝 Text mode (Additional)
+
+Compare two text files:
+
+```bash
+python main.py text old.txt new.txt
+```
+
+Save result:
+
+```bash
+python main.py text old.txt new.txt result.diff
+```
+
+---
+
+## 📂 Directory mode (Additional)
 
 Compare two directories:
 
@@ -133,8 +140,8 @@ python main.py bin samples/binary/a.bin samples/binary/b.bin
 ## 🎯 Use cases
 
 * Firmware comparison
-* Embedded system analysis
 * Binary diff inspection
+* Embedded system analysis
 * File system comparison
 
 ---
@@ -150,3 +157,4 @@ python main.py bin samples/binary/a.bin samples/binary/b.bin
 ## 🔧 Requirements
 
 * Python 3.x
+
