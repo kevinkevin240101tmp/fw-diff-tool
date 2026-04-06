@@ -2,6 +2,8 @@
 
 Understand firmware (binary) changes instantly — without reading raw hex.
 
+A CLI tool to compare binary files, detect changed regions, and generate structured diff results.
+
 A lightweight CLI tool focused on **firmware / binary comparison**, with additional text and directory diff modes.
 
 Designed for engineers who need fast, scriptable, and reliable diff results.
@@ -38,8 +40,8 @@ python main.py -h
 
 ```
 bin   Compare two binary files and show byte differences / regions
-text  Compare two text files and output unified diff
 dir   Compare two directories and list changed / added / removed files
+text  Compare two text files and output unified diff
 ```
 
 👉 For detailed usage of each mode:
