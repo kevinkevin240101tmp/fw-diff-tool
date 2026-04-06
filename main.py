@@ -237,6 +237,8 @@ Modes:
   text  Compare two text files and output unified diff
   bin   Compare two binary files and show byte differences / regions
   dir   Compare two directories and list changed / added / removed files
+
+Use 'python main.py <mode> -h' for detailed help of each mode.
 """
 
     epilog = """Examples:
